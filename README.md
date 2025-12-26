@@ -1,16 +1,158 @@
-# React + Vite
+Fault-Tolerant Data Processing System (React + JavaScript)
+Overview
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a fault-tolerant data ingestion and processing system built using React and JavaScript.
+It is designed to handle unreliable, inconsistent, and duplicate event data coming from multiple external clients.
 
-Currently, two official plugins are available:
+The system safely ingests raw events, normalizes them into a consistent format, prevents duplicate processing, handles partial failures, and exposes aggregated results through a simple UI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Key Problems This Project Solves
 
-## React Compiler
+Clients do not follow a fixed schema
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Data types are inconsistent (string numbers, different date formats)
 
-## Expanding the ESLint configuration
+Events can be retried or duplicated
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Failures can occur during processing
+
+System must remain consistent and reliable
+
+How the System Works (High Level Flow)
+Raw Event (UI)
+   ↓
+Ingestion Layer
+   ↓
+Normalization Layer
+   ↓
+Deduplication (Idempotency)
+   ↓
+Safe Storage
+   ↓
+Aggregation Logic
+   ↓
+UI Display
+
+
+Each step is clearly separated to keep the system clean, safe, and easy to extend.
+
+Core Features
+1. Event Ingestion
+
+Accepts raw JSON events from different clients
+
+Handles missing or extra fields gracefully
+
+Acts as a single entry point for all events
+
+2. Normalization Layer
+
+Converts unreliable input into a canonical internal format
+
+Safely parses:
+
+Client identifiers
+
+Metrics
+
+Amounts (string → number)
+
+Timestamps (multiple formats → ISO)
+
+Keeps original raw data for debugging and auditing
+
+Example normalized format:
+
+{
+  "client_id": "client_A",
+  "metric": "sales",
+  "amount": 1200,
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+
+3. Idempotency & Deduplication
+
+No event ID is provided by clients
+
+A deterministic hash is generated from normalized data
+
+Duplicate or retried events are safely ignored
+
+Prevents double counting even after failures
+
+4. Partial Failure Handling
+
+Simulates database failures
+
+Failed events are stored separately
+
+No data is lost
+
+Retried events do not cause duplicate processing
+
+5. Aggregation
+
+Aggregation logic is fully separated from ingestion
+
+Supports:
+
+Total amount
+
+Event count
+
+Client-based filtering
+
+Designed for easy future extension
+
+6. Minimal Frontend UI
+
+Manual submission of raw JSON events
+
+Toggle to simulate failures
+
+View:
+
+Successfully processed events
+
+Failed events
+
+Aggregated results
+
+Project Folder Structure
+src/
+ ├─ components/
+ │   ├─ EventForm.jsx          # UI for submitting raw events
+ │   ├─ EventList.jsx          # Displays processed & failed events
+ │   ├─ AggregationView.jsx    # Shows aggregated results
+ │
+ ├─ services/
+ │   ├─ ingestEvent.js         # Main ingestion logic
+ │   ├─ normalizeEvent.js      # Converts raw data to canonical format
+ │   ├─ deduplicate.js         # Handles idempotency & hashing
+ │   ├─ aggregate.js           # Aggregation logic
+ │
+ ├─ store/
+ │   └─ eventStore.js          # In-memory data store (acts like DB)
+ │
+ ├─ App.jsx                    # Application entry point
+ └─ main.jsx                   # React bootstrap file
+
+Why This Design
+
+Clear separation of concerns
+
+Safe under retries and failures
+
+Easy to debug and extend
+
+Avoids over-engineering
+
+Mimics real-world backend system design using simple frontend tools
+
+Tech Stack
+
+React
+
+JavaScript
+
+In-memory state (no backend required)
